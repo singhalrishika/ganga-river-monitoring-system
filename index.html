@@ -1153,5 +1153,81 @@ Date: ${new Date().toLocaleString()}
     this.reset();
 });
 </script>
+ // -------------------------
+// Feedback Form & Report
+// -------------------------
+document.getElementById('feedbackForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const location = document.getElementById('locationSelect').value;
+    const issue = document.getElementById('issueType').value;
+    const observation = document.getElementById('observationText').value;
+
+    if (!location || !issue || !observation) {
+        alert('Please fill all required fields!');
+        return;
+    }
+
+    // Prepare report content
+    const reportContent = `
+GANGA RIVER WATER QUALITY REPORT
+--------------------------------
+Location: ${location}
+Issue Type: ${issue}
+Observation: ${observation}
+Date: ${new Date().toLocaleString()}
+--------------------------------
+`;
+
+    // Create blob
+    const blob = new Blob([reportContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+
+    // Download automatically
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Ganga_River_Report_${location}_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Open report in new tab
+    window.open(url, '_blank');
+
+    // Revoke blob URL after short delay
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+    // Optional: show success notification
+    showNotification('Report generated and opened successfully!', 4000);
+
+    this.reset();
+});
+
+// -------------------------
+// Notification Function
+// -------------------------
+function showNotification(message, duration = 3000) {
+    const notification = document.createElement('div');
+    notification.className = 'alert alert-success notification-toast';
+    notification.textContent = message;
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.zIndex = '1050';
+    notification.style.minWidth = '250px';
+    notification.style.textAlign = 'center';
+    notification.style.borderRadius = '8px';
+    notification.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+    document.body.appendChild(notification);
+
+    // Auto-remove after duration
+    if (duration > 0) {
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, duration);
+    }
+}
 </body>
 </html>
