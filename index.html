@@ -1116,6 +1116,42 @@ document.getElementById('feedbackForm').addEventListener('submit', async functio
                 }, duration);
             }
         }
-    </script>
+    <script>
+document.getElementById('feedbackForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const location = document.getElementById('locationSelect').value;
+    const issue = document.getElementById('issueType').value;
+    const observation = document.getElementById('observationText').value;
+    const fileInput = document.getElementById('fileUpload');
+
+    // Prepare report content
+    const reportContent = `
+GANGA RIVER WATER QUALITY REPORT
+--------------------------------
+Location: ${location}
+Issue Type: ${issue}
+Observation: ${observation}
+Date: ${new Date().toLocaleString()}
+--------------------------------
+`;
+
+    // Create a blob with text content
+    const blob = new Blob([reportContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+
+    // Create temporary anchor to trigger download
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Ganga_River_Report_${location}_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    alert('Report generated and downloaded successfully!');
+    this.reset();
+});
+</script>
 </body>
 </html>
