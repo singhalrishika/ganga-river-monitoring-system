@@ -1154,8 +1154,10 @@ Date: ${new Date().toLocaleString()}
 });
 </script>
  // -------------------------
-// Feedback Form & Report
-// -------------------------
+<!-- ------------------------- -->
+<!-- Feedback Form & Report -->
+<!-- ------------------------- -->
+<script>
 document.getElementById('feedbackForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
@@ -1179,27 +1181,32 @@ Date: ${new Date().toLocaleString()}
 --------------------------------
 `;
 
-    // Create blob
+    // -----------------------------
+    // 1️⃣ Download TXT file
+    // -----------------------------
     const blob = new Blob([reportContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
-
-    // Download automatically
     const a = document.createElement('a');
     a.href = url;
     a.download = `Ganga_River_Report_${location}_${new Date().toISOString().split('T')[0]}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-
-    // Open report in new tab
-    window.open(url, '_blank');
-
-    // Revoke blob URL after short delay
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-    // Optional: show success notification
+    // -----------------------------
+    // 2️⃣ Open report in new tab
+    // -----------------------------
+    const newTab = window.open();
+    newTab.document.write('<pre style="font-family: monospace; font-size: 16px;">' + reportContent + '</pre>');
+    newTab.document.title = 'Ganga River Report';
+
+    // -----------------------------
+    // 3️⃣ Show notification
+    // -----------------------------
     showNotification('Report generated and opened successfully!', 4000);
 
+    // Reset form
     this.reset();
 });
 
@@ -1229,5 +1236,6 @@ function showNotification(message, duration = 3000) {
         }, duration);
     }
 }
+</script>
 </body>
 </html>
