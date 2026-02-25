@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+ye hai tum isme add krke dedo mai reeplace karlungi  <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -948,7 +948,6 @@
                 }, 1500);
             });
             
-           // Backend-connected feedback form
 document.getElementById('feedbackForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
@@ -959,18 +958,39 @@ document.getElementById('feedbackForm').addEventListener('submit', async functio
     try {
         const response = await fetch("/submit-report", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ location, issue, observation })
         });
 
         const data = await response.json();
-
         showNotification("Report submitted successfully! 📄", "success");
 
-        // Auto print
-        window.print();
+        // ---------- Display report in new tab ----------
+        const reportContent = `
+GANGA RIVER WATER QUALITY REPORT
+--------------------------------
+Location: ${location}
+Issue Type: ${issue}
+Observation: ${observation}
+Date: ${new Date().toLocaleString()}
+--------------------------------
+`;
+
+        // Download TXT
+        const blob = new Blob([reportContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Ganga_River_Report_${location}_${new Date().toISOString().split('T')[0]}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+        // Open in new tab
+        const newTab = window.open();
+        newTab.document.write('<pre style="font-family: monospace; font-size:16px;">' + reportContent + '</pre>');
+        newTab.document.title = 'Ganga River Report';
 
         this.reset();
 
@@ -1116,126 +1136,6 @@ document.getElementById('feedbackForm').addEventListener('submit', async functio
                 }, duration);
             }
         }
-    <script>
-document.getElementById('feedbackForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const location = document.getElementById('locationSelect').value;
-    const issue = document.getElementById('issueType').value;
-    const observation = document.getElementById('observationText').value;
-    const fileInput = document.getElementById('fileUpload');
-
-    // Prepare report content
-    const reportContent = `
-GANGA RIVER WATER QUALITY REPORT
---------------------------------
-Location: ${location}
-Issue Type: ${issue}
-Observation: ${observation}
-Date: ${new Date().toLocaleString()}
---------------------------------
-`;
-
-    // Create a blob with text content
-    const blob = new Blob([reportContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-
-    // Create temporary anchor to trigger download
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Ganga_River_Report_${location}_${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    alert('Report generated and downloaded successfully!');
-    this.reset();
-});
-</script>
- // -------------------------
-<!-- ------------------------- -->
-<!-- Feedback Form & Report -->
-<!-- ------------------------- -->
-<script>
-document.getElementById('feedbackForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const location = document.getElementById('locationSelect').value;
-    const issue = document.getElementById('issueType').value;
-    const observation = document.getElementById('observationText').value;
-
-    if (!location || !issue || !observation) {
-        alert('Please fill all required fields!');
-        return;
-    }
-
-    // Prepare report content
-    const reportContent = `
-GANGA RIVER WATER QUALITY REPORT
---------------------------------
-Location: ${location}
-Issue Type: ${issue}
-Observation: ${observation}
-Date: ${new Date().toLocaleString()}
---------------------------------
-`;
-
-    // -----------------------------
-    // 1️⃣ Download TXT file
-    // -----------------------------
-    const blob = new Blob([reportContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Ganga_River_Report_${location}_${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-    // -----------------------------
-    // 2️⃣ Open report in new tab
-    // -----------------------------
-    const newTab = window.open();
-    newTab.document.write('<pre style="font-family: monospace; font-size: 16px;">' + reportContent + '</pre>');
-    newTab.document.title = 'Ganga River Report';
-
-    // -----------------------------
-    // 3️⃣ Show notification
-    // -----------------------------
-    showNotification('Report generated and opened successfully!', 4000);
-
-    // Reset form
-    this.reset();
-});
-
-// -------------------------
-// Notification Function
-// -------------------------
-function showNotification(message, duration = 3000) {
-    const notification = document.createElement('div');
-    notification.className = 'alert alert-success notification-toast';
-    notification.textContent = message;
-    notification.style.position = 'fixed';
-    notification.style.top = '20px';
-    notification.style.right = '20px';
-    notification.style.zIndex = '1050';
-    notification.style.minWidth = '250px';
-    notification.style.textAlign = 'center';
-    notification.style.borderRadius = '8px';
-    notification.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
-    document.body.appendChild(notification);
-
-    // Auto-remove after duration
-    if (duration > 0) {
-        setTimeout(() => {
-            if (notification.parentElement) {
-                notification.remove();
-            }
-        }, duration);
-    }
-}
-</script>
+    </script>
 </body>
 </html>
