@@ -1,0 +1,1121 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ganga River Watch - Water Quality Monitoring</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+</script>
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+
+    :root {
+        --primary-blue: #3B82F6;
+        --secondary-blue: #60A5FA;
+        --success-green: #22C55E;
+        --warning-yellow: #FACC15;
+        --danger-red: #EF4444;
+        --text-color: #E5E7EB;
+        --card-bg: rgba(255, 255, 255, 0.05);
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        color: var(--text-color);
+        background: #0f172a;
+        overflow-x: hidden;
+        position: relative;
+    }
+
+    /* Background image with gradient overlay */
+    body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: url('https://images.unsplash.com/photo-1607082349566-187342da3ec9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')
+                    no-repeat center center/cover;
+        z-index: -2;
+    }
+
+    body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(15,23,42,0.85), rgba(30,41,59,0.75));
+        z-index: -1;
+    }
+
+    .navbar {
+        background: rgba(0, 0, 0, 0.4) !important;
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .navbar-brand {
+        font-weight: 700;
+        font-size: 1.6rem;
+        color: #fff !important;
+    }
+
+    .hero-section {
+        background: transparent;
+        color: #fff;
+        padding: 5rem 0 3rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .card {
+        background: var(--card-bg);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(16px);
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+    }
+
+    .card-title, .card-subtitle {
+        color: #F9FAFB !important;
+    }
+
+    .text-muted {
+        color: #9CA3AF !important;
+    }
+
+    .footer {
+        background: rgba(0,0,0,0.6);
+        border-top: 1px solid rgba(255,255,255,0.08);
+        color: #fff;
+    }
+
+    /* Alerts with glow */
+    .alert {
+        backdrop-filter: blur(8px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(239, 68, 68, 0.2);
+        color: #fff;
+    }
+
+    .alert.alert-warning {
+        background: rgba(251, 191, 36, 0.2);
+        color: #FCD34D;
+    }
+
+    /* Progress bars with rounded look */
+    .progress {
+        height: 10px;
+        border-radius: 20px;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        border-radius: 20px;
+    }
+
+    /* Status indicator dots */
+    .status-indicator {
+        height: 12px;
+        width: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+    }
+    .good { background-color: var(--success-green); }
+    .moderate { background-color: var(--warning-yellow); }
+    .poor { background-color: var(--danger-red); }
+
+/* Ensure Leaflet map is visible */
+#map {
+  height: 400px !important;   /* adjustable height */
+  width: 100%;
+  border-radius: 12px;
+  z-index: 1;
+  background: #1e293b; /* fallback background until tiles load */
+}
+
+</style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-water me-2"></i>
+                Ganga River Watch
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#"><i class="fas fa-gauge me-1"></i> Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-chart-line me-1"></i> Forecast</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-database me-1"></i> Data</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-info-circle me-1"></i> About</a>
+                    </li>
+                    <li class="nav-item notification-bell mx-2">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </li>
+                    <li class="nav-item">
+                        <div class="user-profile" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Your Profile">
+                            JS
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="hero-section text-center mb-4">
+            <h1 class="display-4 fw-bold">Ganga River Water Quality Dashboard</h1>
+            <p class="lead">Real-time monitoring and forecasting of water quality parameters</p>
+            <div class="mt-3">
+                <span class="badge bg-light text-dark me-2"><i class="fas fa-bolt me-1"></i> Live Data</span>
+                <span class="badge bg-light text-dark me-2"><i class="fas fa-robot me-1"></i> AI Forecasting</span>
+                <span class="badge bg-light text-dark"><i class="fas fa-bell me-1"></i> Smart Alerts</span>
+            </div>
+            <div class="mt-4">
+                <button class="btn btn-light me-2" id="tourBtn">
+                    <i class="fas fa-road me-1"></i> Take a Tour
+                </button>
+                <button class="btn btn-outline-light" id="refreshData">
+                    <i class="fas fa-sync-alt me-1"></i> Refresh Data
+                </button>
+            </div>
+        </div>
+
+        <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert" id="mainAlert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Warning:</strong> High pollution levels detected at Varanasi monitoring station.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title"><i class="fas fa-map-marker-alt me-2"></i>Select Monitoring Location</h5>
+                    <span class="badge bg-primary" id="lastUpdated">Last updated: <span id="updateTime">Just now</span></span>
+                </div>
+                <div class="d-flex flex-wrap">
+                    <button type="button" class="btn btn-primary location-btn active" data-location="all" data-lat="25.3176" data-lng="83.0058" data-zoom="6">
+                        <i class="fas fa-globe me-1"></i> All Locations
+                    </button>
+                    <button type="button" class="btn btn-outline-primary location-btn" data-location="haridwar" data-lat="29.9457" data-lng="78.1642" data-zoom="12">
+                        <i class="fas fa-map-pin me-1"></i> Haridwar
+                    </button>
+                    <button type="button" class="btn btn-outline-primary location-btn" data-location="kanpur" data-lat="26.4499" data-lng="80.3319" data-zoom="12">
+                        <i class="fas fa-map-pin me-1"></i> Kanpur
+                    </button>
+                    <button type="button" class="btn btn-outline-danger location-btn" data-location="varanasi" data-lat="25.3176" data-lng="83.0058" data-zoom="12">
+                        <i class="fas fa-map-pin me-1"></i> Varanasi
+                    </button>
+                    <button type="button" class="btn btn-outline-primary location-btn" data-location="patna" data-lat="25.5941" data-lng="85.1376" data-zoom="12">
+                        <i class="fas fa-map-pin me-1"></i> Patna
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title"><i class="fas fa-map me-2"></i>Monitoring Stations</h5>
+                            <div class="custom-tooltip">
+                                <i class="fas fa-info-circle text-muted"></i>
+                                <span class="tooltip-text">Click on markers for details</span>
+                            </div>
+                        </div>
+                        <div id="map"></div>
+                        <div class="mt-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="realTimeUpdates" checked>
+                                <label class="form-check-label" for="realTimeUpdates">Live updates</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-vial me-2"></i>Current Water Quality Parameters</h5>
+                        <p class="text-muted">Click on any parameter to view detailed trends</p>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="card text-center parameter-card interactive-panel" data-param="do">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted"><i class="fas fa-wind me-1"></i>Dissolved Oxygen</h6>
+                                        <div class="parameter-value" style="color: var(--primary-blue);">
+                                            5.9 mg/L
+                                        </div>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-primary" style="width: 59%"></div>
+                                        </div>
+                                        <div class="mt-2">
+                                            <span class="status-indicator moderate"></span>
+                                            Moderate
+                                        </div>
+                                        <span class="badge bg-warning trend-badge mt-2"><i class="fas fa-exclamation-triangle me-1"></i>Alert</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card text-center parameter-card interactive-panel" data-param="bod">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted"><i class="fas fa-recycle me-1"></i>Biological Oxygen Demand</h6>
+                                        <div class="parameter-value" style="color: var(--warning-yellow);">
+                                            4.2 mg/L
+                                        </div>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-warning" style="width: 42%"></div>
+                                        </div>
+                                        <div class="mt-2">
+                                            <span class="status-indicator moderate"></span>
+                                            Moderate
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card text-center parameter-card interactive-panel" data-param="nitrate">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted"><i class="fas fa-flask me-1"></i>Nitrate</h6>
+                                        <div class="parameter-value" style="color: var(--danger-red);">
+                                            8.7 mg/L
+                                        </div>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-danger" style="width: 87%"></div>
+                                        </div>
+                                        <div class="mt-2">
+                                            <span class="status-indicator poor"></span>
+                                            Poor
+                                        </div>
+                                        <span class="badge bg-danger trend-badge mt-2"><i class="fas fa-exclamation-circle me-1"></i>Alert</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card text-center parameter-card interactive-panel" data-param="coliform">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted"><i class="fas fa-bacteria me-1"></i>Fecal Coliform</h6>
+                                        <div class="parameter-value" style="color: var(--danger-red);">
+                                            1220 MPN/100mL
+                                        </div>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-danger" style="width: 76%"></div>
+                                        </div>
+                                        <div class="mt-2">
+                                            <span class="status-indicator poor"></span>
+                                            Poor
+                                        </div>
+                                        <span class="badge bg-danger trend-badge mt-2"><i class="fas fa-exclamation-circle me-1"></i>Alert</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title"><i class="fas fa-chart-line me-2"></i>Water Quality Trends</h5>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="weekView">Week</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm active" id="monthView">Month</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="yearView">Year</button>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="parameter-select" class="form-label">Select Parameter:</label>
+                        <select class="form-select" id="parameter-select">
+                            <option value="do">Dissolved Oxygen (DO)</option>
+                            <option value="bod">Biological Oxygen Demand (BOD)</option>
+                            <option value="nitrate">Nitrate</option>
+                            <option value="coliform">Fecal Coliform</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="height: 300px; width: 100%;">
+                    <canvas id="qualityChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4 forecast-card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-cloud-sun-rain me-2"></i>3-Day Water Quality Forecast</h5>
+                <p class="text-muted">Predictions based on historical data and current conditions</p>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Today</th>
+                                <th>Tomorrow</th>
+                                <th>Day 3</th>
+                                <th>Trend</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><i class="fas fa-wind me-2"></i>Dissolved Oxygen (mg/L)</td>
+                                <td>5.9</td>
+                                <td>5.8</td>
+                                <td>5.7</td>
+                                <td><span class="text-danger"><i class="fas fa-arrow-down"></i> Decreasing</span></td>
+                                <td><button class="btn btn-sm btn-outline-primary">Details</button></td>
+                            </tr>
+                            <tr class="table-warning">
+                                <td><i class="fas fa-recycle me-2"></i>BOD (mg/L)</td>
+                                <td>4.2</td>
+                                <td>4.4</td>
+                                <td>4.6</td>
+                                <td><span class="text-danger"><i class="fas fa-arrow-up"></i> Increasing</span></td>
+                                <td><button class="btn btn-sm btn-outline-primary">Details</button></td>
+                            </tr>
+                            <tr class="table-danger">
+                                <td><i class="fas fa-flask me-2"></i>Nitrate (mg/L)</td>
+                                <td>8.7</td>
+                                <td>9.2</td>
+                                <td>9.8</td>
+                                <td><span class="text-danger"><i class="fas fa-arrow-up"></i> Increasing</span></td>
+                                <td><button class="btn btn-sm btn-outline-primary">Details</button></td>
+                            </tr>
+                            <tr class="table-danger">
+                                <td><i class="fas fa-bacteria me-2"></i>Fecal Coliform (MPN/100mL)</td>
+                                <td>1220</td>
+                                <td>1250</td>
+                                <td>1300</td>
+                                <td><span class="text-danger"><i class="fas fa-arrow-up"></i> Increasing</span></td>
+                                <td><button class="btn btn-sm btn-outline-primary">Details</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-comment me-2"></i>Share Your Observations</h5>
+                <p class="text-muted">Help us improve by reporting issues or sharing your insights</p>
+                <form id="feedbackForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="locationSelect" class="form-label">Location</label>
+                            <select class="form-select" id="locationSelect" required>
+                                <option value="">Select a location</option>
+                                <option value="haridwar">Haridwar</option>
+                                <option value="kanpur">Kanpur</option>
+                                <option value="varanasi">Varanasi</option>
+                                <option value="patna">Patna</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="issueType" class="form-label">Issue Type</label>
+                            <select class="form-select" id="issueType" required>
+                                <option value="">Select issue type</option>
+                                <option value="pollution">Pollution</option>
+                                <option value="odor">Unusual Odor</option>
+                                <option value="color">Water Discoloration</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="observationText" class="form-label">Your Observation</label>
+                        <textarea class="form-control" id="observationText" rows="3" placeholder="Describe what you observed..." required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fileUpload" class="form-label">Upload Photo (optional)</label>
+                        <input class="form-control" type="file" id="fileUpload" accept="image/*">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Report</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center footer">
+        <div class="container">
+            <p>Ganga River Water Quality Monitoring System © 2023 | AIC Hackathon Project</p>
+            <p class="text-muted">Data is simulated for demonstration purposes</p>
+            <div class="mt-2">
+                <button class="btn btn-sm btn-outline-light me-2" id="themeToggle">
+                    <i class="fas fa-moon me-1"></i> Toggle Dark Mode
+                </button>
+                <button class="btn btn-sm btn-outline-light" id="fontSizeToggle">
+                    <i class="fas fa-text-height me-1"></i> Adjust Text Size
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <div class="alert alert-warning alert-box" role="alert" id="floatingAlert">
+        <div class="d-flex">
+            <div class="me-3">
+                <i class="fas fa-exclamation-triangle fa-2x"></i>
+            </div>
+            <div>
+                <h6 class="alert-heading">Pollution Alert!</h6>
+                <p class="mb-0">High nitrate levels detected in Varanasi. Immediate attention recommended.</p>
+            </div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+        </div>
+    </div>
+
+    <div class="modal fade" id="welcomeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Welcome to Ganga River Watch!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>This interactive dashboard provides real-time monitoring of water quality parameters along the Ganga River.</p>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="dontShowAgain">
+                        <label class="form-check-label" for="dontShowAgain">
+                            Don't show this again
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Data for each location
+        const locationData = {
+            'haridwar': {
+                'do': {
+                    current: 6.8,
+                    status: 'good',
+                    historical: [6.5, 6.6, 6.8, 6.7, 6.9, 7.0, 7.1, 7.0, 6.9, 6.8],
+                    forecast: [6.7, 6.6, 6.5, 6.4, 6.3]
+                },
+                'bod': {
+                    current: 2.1,
+                    status: 'good',
+                    historical: [2.0, 2.1, 2.0, 2.2, 2.1, 2.3, 2.2, 2.1, 2.0, 2.1],
+                    forecast: [2.2, 2.3, 2.4, 2.5, 2.6]
+                },
+                'nitrate': {
+                    current: 3.5,
+                    status: 'good',
+                    historical: [3.4, 3.5, 3.6, 3.5, 3.7, 3.6, 3.5, 3.4, 3.5, 3.5],
+                    forecast: [3.6, 3.7, 3.8, 3.9, 4.0]
+                },
+                'coliform': {
+                    current: 450,
+                    status: 'moderate',
+                    historical: [420, 450, 480, 500, 490, 470, 460, 450, 440, 450],
+                    forecast: [480, 510, 550, 600, 650]
+                }
+            },
+            'kanpur': {
+                'do': {
+                    current: 5.2,
+                    status: 'moderate',
+                    historical: [5.5, 5.4, 5.3, 5.1, 5.0, 5.2, 5.1, 5.3, 5.2, 5.2],
+                    forecast: [5.1, 5.0, 4.9, 4.8, 4.7]
+                },
+                'bod': {
+                    current: 4.2,
+                    status: 'moderate',
+                    historical: [4.0, 4.1, 4.2, 4.1, 4.3, 4.2, 4.4, 4.3, 4.2, 4.2],
+                    forecast: [4.3, 4.4, 4.5, 4.6, 4.7]
+                },
+                'nitrate': {
+                    current: 6.8,
+                    status: 'poor',
+                    historical: [6.5, 6.6, 6.7, 6.9, 6.8, 7.0, 6.9, 6.8, 6.7, 6.8],
+                    forecast: [7.0, 7.2, 7.4, 7.6, 7.8]
+                },
+                'coliform': {
+                    current: 850,
+                    status: 'poor',
+                    historical: [800, 820, 840, 830, 850, 860, 870, 850, 840, 850],
+                    forecast: [880, 910, 950, 1000, 1050]
+                }
+            },
+            'varanasi': {
+                'do': {
+                    current: 5.9,
+                    status: 'moderate',
+                    historical: [6.0, 5.9, 5.8, 5.7, 5.9, 5.8, 5.7, 5.6, 5.8, 5.9],
+                    forecast: [5.8, 5.7, 5.6, 5.5, 5.4]
+                },
+                'bod': {
+                    current: 4.2,
+                    status: 'moderate',
+                    historical: [4.1, 4.0, 4.2, 4.3, 4.4, 4.3, 4.2, 4.1, 4.2, 4.2],
+                    forecast: [4.3, 4.4, 4.5, 4.6, 4.7]
+                },
+                'nitrate': {
+                    current: 8.7,
+                    status: 'poor',
+                    historical: [8.5, 8.6, 8.7, 8.8, 8.7, 8.9, 9.0, 8.9, 8.8, 8.7],
+                    forecast: [9.0, 9.2, 9.4, 9.6, 9.8]
+                },
+                'coliform': {
+                    current: 1220,
+                    status: 'poor',
+                    historical: [1180, 1200, 1210, 1220, 1230, 1240, 1250, 1230, 1220, 1220],
+                    forecast: [1250, 1280, 1320, 1380, 1450]
+                }
+            },
+            'patna': {
+                'do': {
+                    current: 6.2,
+                    status: 'good',
+                    historical: [6.1, 6.2, 6.3, 6.4, 6.3, 6.2, 6.1, 6.0, 6.1, 6.2],
+                    forecast: [6.1, 6.0, 5.9, 5.8, 5.7]
+                },
+                'bod': {
+                    current: 3.1,
+                    status: 'moderate',
+                    historical: [3.0, 3.1, 3.2, 3.1, 3.0, 3.2, 3.1, 3.0, 3.1, 3.1],
+                    forecast: [3.2, 3.3, 3.4, 3.5, 3.6]
+                },
+                'nitrate': {
+                    current: 5.4,
+                    status: 'moderate',
+                    historical: [5.3, 5.4, 5.5, 5.6, 5.5, 5.4, 5.3, 5.2, 5.3, 5.4],
+                    forecast: [5.5, 5.6, 5.7, 5.8, 5.9]
+                },
+                'coliform': {
+                    current: 680,
+                    status: 'moderate',
+                    historical: [650, 660, 670, 680, 690, 700, 690, 680, 670, 680],
+                    forecast: [700, 720, 750, 780, 820]
+                }
+            }
+        };
+
+        // Initialize the map
+        let map;
+        let markers = [];
+        let currentChart;
+        let currentLocation = 'all';
+        
+        function initMap() {
+            map = L.map('map').setView([25.3176, 83.0058], 6);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Add markers for monitoring stations
+            const locations = [
+                { name: "Haridwar", lat: 29.9457, lng: 78.1642, status: "good" },
+                { name: "Kanpur", lat: 26.4499, lng: 80.3319, status: "moderate" },
+                { name: "Allahabad", lat: 25.4358, lng: 81.8463, status: "moderate" },
+                { name: "Varanasi", lat: 25.3176, lng: 83.0058, status: "poor" },
+                { name: "Patna", lat: 25.5941, lng: 85.1376, status: "moderate" }
+            ];
+            
+            locations.forEach(loc => {
+                let iconColor;
+                if (loc.status === "good") iconColor = "green";
+                else if (loc.status === "moderate") iconColor = "orange";
+                else iconColor = "red";
+                
+                const marker = L.marker([loc.lat, loc.lng], {
+                    icon: L.icon({
+                        iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${iconColor}.png`,
+                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                        iconSize: [25, 41],
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34],
+                        shadowSize: [41, 41]
+                    })
+                }).addTo(map);
+                
+                // Store reference to marker
+                markers.push(marker);
+                
+                // Create custom popup content
+                const popupContent = `
+                    <div class="map-marker-popup">
+                        <h6>${loc.name}</h6>
+                        <div class="location-status ${loc.status}">${loc.status.toUpperCase()}</div>
+                        <p class="mt-2 mb-1">Latest reading: ${getLatestReading(loc.name)}</p>
+                        <button class="btn btn-sm btn-primary mt-1 view-details" data-location="${loc.name.toLowerCase()}">View Details</button>
+                    </div>
+                `;
+                
+                marker.bindPopup(popupContent);
+                
+                // Add event listener to popup buttons
+                marker.on('popupopen', function() {
+                    document.querySelector('.view-details')?.addEventListener('click', function() {
+                        const location = this.getAttribute('data-location');
+                        document.querySelector(`.location-btn[data-location="${location}"]`).click();
+                    });
+                });
+            });
+        }
+        
+        // Helper function to generate readings based on location
+        function getLatestReading(location) {
+            const readings = {
+                "Haridwar": "DO: 6.8 mg/L",
+                "Kanpur": "BOD: 3.5 mg/L",
+                "Allahabad": "Nitrate: 5.2 mg/L",
+                "Varanasi": "Coliform: 1220 MPN/100mL",
+                "Patna": "DO: 6.2 mg/L"
+            };
+            return readings[location] || "Data not available";
+        }
+        
+        // Initialize the chart
+        function initChart() {
+            const ctx = document.getElementById('qualityChart').getContext('2d');
+            
+            const data = {
+                labels: ['Day -9', 'Day -8', 'Day -7', 'Day -6', 'Day -5', 'Day -4', 'Day -3', 'Day -2', 'Day -1', 'Today', 'Day +1', 'Day +2', 'Day +3', 'Day +4', 'Day +5'],
+                datasets: [
+                    {
+                        label: 'Historical Data',
+                        data: locationData['varanasi'].do.historical,
+                        borderColor: 'rgb(21, 101, 192)',
+                        backgroundColor: 'rgba(21, 101, 192, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointBackgroundColor: 'rgb(21, 101, 192)',
+                        pointRadius: 4,
+                        fill: false
+                    },
+                    {
+                        label: '5-Day Forecast',
+                        data: [...Array(10).fill(null), ...locationData['varanasi'].do.forecast],
+                        borderColor: 'rgb(255, 193, 7)',
+                        backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        tension: 0.3,
+                        pointBackgroundColor: 'rgb(255, 193, 7)',
+                        pointRadius: 4,
+                        fill: false
+                    }
+                ]
+            };
+            
+            const options = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        title: {
+                            display: true,
+                            text: 'mg/L'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Dissolved Oxygen Levels (Historical & Forecast)'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.parsed.y}`;
+                            }
+                        }
+                    }
+                },
+                onClick: function(e, elements) {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const value = this.data.datasets[0].data[index];
+                        alert(`Value on ${this.data.labels[index]}: ${value}`);
+                    }
+                }
+            };
+            
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: data,
+                options: options
+            });
+            
+            // Update chart when parameter selection changes
+            document.getElementById('parameter-select').addEventListener('change', function() {
+                updateChart(currentLocation, this.value);
+            });
+            
+            return chart;
+        }
+        
+        // Update chart based on location and parameter
+        function updateChart(location, param) {
+            const paramData = locationData[location][param];
+            const historicalData = paramData.historical;
+            const forecastData = paramData.forecast;
+
+            let labels, label, unit, color, forecastColor;
+            
+            labels = ['Day -9', 'Day -8', 'Day -7', 'Day -6', 'Day -5', 'Day -4', 'Day -3', 'Day -2', 'Day -1', 'Today', 'Day +1', 'Day +2', 'Day +3', 'Day +4', 'Day +5'];
+            
+            switch(param) {
+                case 'do':
+                    label = 'Dissolved Oxygen';
+                    unit = 'mg/L';
+                    color = 'rgb(21, 101, 192)';
+                    forecastColor = 'rgb(255, 193, 7)';
+                    break;
+                case 'bod':
+                    label = 'Biological Oxygen Demand';
+                    unit = 'mg/L';
+                    color = 'rgb(255, 193, 7)';
+                    forecastColor = 'rgb(229, 57, 53)';
+                    break;
+                case 'nitrate':
+                    label = 'Nitrate';
+                    unit = 'mg/L';
+                    color = 'rgb(229, 57, 53)';
+                    forecastColor = 'rgb(255, 193, 7)';
+                    break;
+                case 'coliform':
+                    label = 'Fecal Coliform';
+                    unit = 'MPN/100mL';
+                    color = 'rgb(229, 57, 53)';
+                    forecastColor = 'rgb(255, 193, 7)';
+                    break;
+            }
+            
+            // Update historical data set
+            currentChart.data.datasets[0].data = historicalData;
+            currentChart.data.datasets[0].label = `${label} (${unit}) - Historical`;
+            currentChart.data.datasets[0].borderColor = color;
+            currentChart.data.datasets[0].pointBackgroundColor = color;
+
+            // Update forecast data set, with nulls for historical period
+            currentChart.data.datasets[1].data = [...Array(10).fill(null), ...forecastData];
+            currentChart.data.datasets[1].label = `${label} (${unit}) - Forecast`;
+            currentChart.data.datasets[1].borderColor = forecastColor;
+            currentChart.data.datasets[1].pointBackgroundColor = forecastColor;
+            
+            currentChart.options.plugins.title.text = `${label} Levels for ${location.charAt(0).toUpperCase() + location.slice(1)} (Historical & Forecast)`;
+            currentChart.options.scales.y.title.text = unit;
+            
+            currentChart.update();
+        }
+
+        // Update parameter cards based on location
+        function updateParameterCards(location) {
+            const data = locationData[location];
+            
+            // DO
+            document.querySelector('[data-param="do"] .parameter-value').textContent = `${data.do.current} mg/L`;
+            document.querySelector('[data-param="do"] .progress-bar').style.width = `${data.do.current * 10}%`;
+            document.querySelector('[data-param="do"] .status-indicator').className = `status-indicator ${data.do.status}`;
+            document.querySelector('[data-param="do"] .mt-2').innerHTML = `<span class="status-indicator ${data.do.status}"></span>${data.do.status.charAt(0).toUpperCase() + data.do.status.slice(1)}`;
+            
+            // BOD
+            document.querySelector('[data-param="bod"] .parameter-value').textContent = `${data.bod.current} mg/L`;
+            document.querySelector('[data-param="bod"] .progress-bar').style.width = `${data.bod.current * 10}%`;
+            document.querySelector('[data-param="bod"] .status-indicator').className = `status-indicator ${data.bod.status}`;
+            document.querySelector('[data-param="bod"] .mt-2').innerHTML = `<span class="status-indicator ${data.bod.status}"></span>${data.bod.status.charAt(0).toUpperCase() + data.bod.status.slice(1)}`;
+
+            // Nitrate
+            document.querySelector('[data-param="nitrate"] .parameter-value').textContent = `${data.nitrate.current} mg/L`;
+            document.querySelector('[data-param="nitrate"] .progress-bar').style.width = `${data.nitrate.current * 10}%`;
+            document.querySelector('[data-param="nitrate"] .status-indicator').className = `status-indicator ${data.nitrate.status}`;
+            document.querySelector('[data-param="nitrate"] .mt-2').innerHTML = `<span class="status-indicator ${data.nitrate.status}"></span>${data.nitrate.status.charAt(0).toUpperCase() + data.nitrate.status.slice(1)}`;
+
+            // Coliform
+            document.querySelector('[data-param="coliform"] .parameter-value').textContent = `${data.coliform.current} MPN/100mL`;
+            document.querySelector('[data-param="coliform"] .progress-bar').style.width = `${data.coliform.current / 20}%`;
+            document.querySelector('[data-param="coliform"] .status-indicator').className = `status-indicator ${data.coliform.status}`;
+            document.querySelector('[data-param="coliform"] .mt-2').innerHTML = `<span class="status-indicator ${data.coliform.status}"></span>${data.coliform.status.charAt(0).toUpperCase() + data.coliform.status.slice(1)}`;
+
+            // Update alert box for Varanasi
+            const floatingAlert = document.getElementById('floatingAlert');
+            if (location === 'varanasi' && (data.nitrate.status === 'poor' || data.coliform.status === 'poor')) {
+                floatingAlert.style.display = 'block';
+            } else {
+                floatingAlert.style.display = 'none';
+            }
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize map and chart
+            initMap();
+            currentChart = initChart();
+            
+            // Show welcome modal
+            const welcomeModal = new bootstrap.Modal(document.getElementById('welcomeModal'));
+            if (!localStorage.getItem('dontShowWelcome')) {
+                welcomeModal.show();
+            }
+            
+            // Handle "Don't show again" checkbox
+            document.getElementById('dontShowAgain').addEventListener('change', function() {
+                if (this.checked) {
+                    localStorage.setItem('dontShowWelcome', 'true');
+                } else {
+                    localStorage.removeItem('dontShowWelcome');
+                }
+            });
+            
+            // Handle location buttons
+            document.querySelectorAll('.location-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Update active state
+                    document.querySelectorAll('.location-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update map view
+                    const lat = parseFloat(this.getAttribute('data-lat'));
+                    const lng = parseFloat(this.getAttribute('data-lng'));
+                    const zoom = parseInt(this.getAttribute('data-zoom'));
+                    
+                    if (this.getAttribute('data-location') === 'all') {
+                        map.setView([lat, lng], zoom);
+                    } else {
+                        map.flyTo([lat, lng], zoom);
+                    }
+                    
+                    // Update current location variable
+                    currentLocation = this.getAttribute('data-location');
+                    if (currentLocation !== 'all') {
+                        updateParameterCards(currentLocation);
+                        updateChart(currentLocation, document.getElementById('parameter-select').value);
+                    }
+                    
+                    // Update last updated time
+                    document.getElementById('updateTime').textContent = new Date().toLocaleTimeString();
+                });
+            });
+            
+            // Handle parameter cards
+            document.querySelectorAll('.parameter-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const param = this.getAttribute('data-param');
+                    document.getElementById('parameter-select').value = param;
+                    updateChart(currentLocation, param);
+                });
+            });
+            
+            // Handle refresh data button
+            document.getElementById('refreshData').addEventListener('click', function() {
+                this.classList.add('data-refresh');
+                setTimeout(() => {
+                    this.classList.remove('data-refresh');
+                    document.getElementById('updateTime').textContent = new Date().toLocaleTimeString();
+                    
+                    // Show success notification
+                    showNotification('Data refreshed successfully!', 'success');
+                }, 1500);
+            });
+            
+           // Backend-connected feedback form
+document.getElementById('feedbackForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const location = document.getElementById("locationSelect").value;
+    const issue = document.getElementById("issueType").value;
+    const observation = document.getElementById("observationText").value;
+
+    try {
+        const response = await fetch("/submit-report", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ location, issue, observation })
+        });
+
+        const data = await response.json();
+
+        showNotification("Report submitted successfully! 📄", "success");
+
+        // Auto print
+        window.print();
+
+        this.reset();
+
+    } catch (error) {
+        showNotification("Error submitting report!", "danger");
+        console.error(error);
+    }
+});
+            
+            // Handle theme toggle
+            document.getElementById('themeToggle').addEventListener('click', function() {
+                document.body.classList.toggle('dark-mode');
+                
+                if (document.body.classList.contains('dark-mode')) {
+                    showNotification('Dark mode enabled', 'info');
+                } else {
+                    showNotification('Light mode enabled', 'info');
+                }
+            });
+            
+            // Handle font size toggle
+            let fontSizeLevel = 0;
+            document.getElementById('fontSizeToggle').addEventListener('click', function() {
+                fontSizeLevel = (fontSizeLevel + 1) % 3;
+                
+                if (fontSizeLevel === 0) {
+                    document.body.style.fontSize = '';
+                    showNotification('Default text size restored', 'info');
+                } else if (fontSizeLevel === 1) {
+                    document.body.style.fontSize = '1.1rem';
+                    showNotification('Text size increased', 'info');
+                } else {
+                    document.body.style.fontSize = '1.2rem';
+                    showNotification('Text size increased further', 'info');
+                }
+            });
+            
+            // Handle tour button
+            document.getElementById('tourBtn').addEventListener('click', function() {
+                showNotification('Starting interactive tour...', 'info');
+                
+                // Simple tour implementation
+                const tourSteps = [
+                    { element: '.navbar-brand', text: 'Welcome to Ganga River Watch! This is our navigation bar.' },
+                    { element: '#map', text: 'Here you can see all monitoring stations along the Ganga River.' },
+                    { element: '.parameter-card', text: 'These cards show current water quality parameters. Click on any to see detailed trends.' },
+                    { element: '#qualityChart', text: 'This chart shows historical trends and forecasts for selected parameters.' }
+                ];
+                
+                let currentStep = 0;
+                
+                function showTourStep() {
+                    if (currentStep >= tourSteps.length) {
+                        showNotification('Tour completed!', 'success');
+                        return;
+                    }
+                    
+                    const step = tourSteps[currentStep];
+                    const element = document.querySelector(step.element);
+                    
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        
+                        // Highlight element
+                        const originalBorder = element.style.border;
+                        element.style.border = '2px solid var(--primary-blue)';
+                        element.style.transition = 'border 0.3s ease';
+                        
+                        showNotification(step.text, 'info', 3000);
+                        
+                        setTimeout(() => {
+                            element.style.border = originalBorder;
+                            
+                            setTimeout(() => {
+                                currentStep++;
+                                showTourStep();
+                            }, 1000);
+                        }, 3000);
+                    } else {
+                        currentStep++;
+                        showTourStep();
+                    }
+                }
+                
+                showTourStep();
+            });
+            
+            // Initialize tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            // Simulate real-time updates if enabled
+            setInterval(() => {
+                if (document.getElementById('realTimeUpdates').checked && currentLocation !== 'all') {
+                    // Simulate data updates
+                    const data = locationData[currentLocation];
+                    for (const param in data) {
+                        const currentValue = data[param].current;
+                        const randomChange = (Math.random() - 0.5) * 0.2;
+                        data[param].current = Math.max(0, currentValue + randomChange);
+                    }
+                    updateParameterCards(currentLocation);
+                    updateChart(currentLocation, document.getElementById('parameter-select').value);
+                    document.getElementById('updateTime').textContent = new Date().toLocaleTimeString();
+                }
+            }, 5000);
+        });
+        
+        // Helper function to show notifications
+        function showNotification(message, type = 'info', duration = 5000) {
+            // Remove any existing notifications
+            const existingNotification = document.getElementById('customNotification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.id = 'customNotification';
+            notification.className = `alert alert-${type} alert-box`;
+            notification.innerHTML = `
+                <div class="d-flex">
+                    <div class="me-3">
+                        <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'warning' ? 'fa-exclamation-triangle' : type === 'danger' ? 'fa-times-circle' : 'fa-info-circle'} fa-2x"></i>
+                    </div>
+                    <div>
+                        <p class="mb-0">${message}</p>
+                    </div>
+                    <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-remove after duration
+            if (duration > 0) {
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, duration);
+            }
+        }
+    </script>
+</body>
+</html>
