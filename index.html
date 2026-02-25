@@ -948,26 +948,19 @@
                 }, 1500);
             });
             
-           // Backend-connected feedback form
-document.getElementById('feedbackForm').addEventListener('submit', async function(e) {
+document.getElementById('feedbackForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
     const location = document.getElementById("locationSelect").value;
     const issue = document.getElementById("issueType").value;
     const observation = document.getElementById("observationText").value;
 
-    try {
-        const response = await fetch("/submit-report", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ location, issue, observation })
-        });
+    if (!location || !issue || !observation) {
+        alert("Please fill all fields!");
+        return;
+    }
 
-        const data = await response.json();
-        showNotification("Report submitted successfully! 📄", "success");
-
-        // ---------- Display report in new tab ----------
-        const reportContent = `
+    const reportContent = `
 GANGA RIVER WATER QUALITY REPORT
 --------------------------------
 Location: ${location}
@@ -977,30 +970,24 @@ Date: ${new Date().toLocaleString()}
 --------------------------------
 `;
 
-        // Download TXT
-        const blob = new Blob([reportContent], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Ganga_River_Report_${location}_${new Date().toISOString().split('T')[0]}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    // Download TXT
+    const blob = new Blob([reportContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Ganga_River_Report_${location}_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 
-        // Open in new tab
-        const newTab = window.open();
-        newTab.document.write('<pre style="font-family: monospace; font-size:16px;">' + reportContent + '</pre>');
-        newTab.document.title = 'Ganga River Report';
+    // Open in new tab
+    const newTab = window.open();
+    newTab.document.write('<pre style="font-family: monospace; font-size: 16px;">' + reportContent + '</pre>');
+    newTab.document.title = 'Ganga River Report';
 
-        this.reset();
-
-    } catch (error) {
-        showNotification("Error submitting report!", "danger");
-        console.error(error);
-    }
-});
-            
+    showNotification("Report generated and opened successfully!", "success");
+    this.reset();
+});        
             // Handle theme toggle
             document.getElementById('themeToggle').addEventListener('click', function() {
                 document.body.classList.toggle('dark-mode');
