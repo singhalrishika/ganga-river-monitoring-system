@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 
 </script>
@@ -956,7 +957,7 @@ document.getElementById('feedbackForm').addEventListener('submit', function(e) {
     const observation = document.getElementById("observationText").value;
 
     if (!location || !issue || !observation) {
-        alert("Please fill all fields!");
+        alert("Please fill all required fields!");
         return;
     }
 
@@ -970,24 +971,22 @@ Date: ${new Date().toLocaleString()}
 --------------------------------
 `;
 
-    // Download TXT
-    const blob = new Blob([reportContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Ganga_River_Report_${location}_${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    // PDF generation
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(12);
+    doc.text(reportContent, 10, 10); // X=10, Y=10
+    const pdfUrl = doc.output('bloburl'); // Create blob URL for PDF
 
-    // Open in new tab
-    const newTab = window.open();
-    newTab.document.write('<pre style="font-family: monospace; font-size: 16px;">' + reportContent + '</pre>');
-    newTab.document.title = 'Ganga River Report';
+    // Open PDF in new tab
+    window.open(pdfUrl, '_blank');
 
-    showNotification("Report generated and opened successfully!", "success");
+    // Optional: download PDF automatically
+    doc.save(`Ganga_River_Report_${location}_${new Date().toISOString().split('T')[0]}.pdf`);
+
+    showNotification('PDF report generated successfully!', 'success');
     this.reset();
-});        
+});       
             // Handle theme toggle
             document.getElementById('themeToggle').addEventListener('click', function() {
                 document.body.classList.toggle('dark-mode');
