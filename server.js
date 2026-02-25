@@ -2,13 +2,17 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const fs = require("fs");
+const path = require("path");
 
 const app = express();
 
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static("public"));
 
+// Serve static files from 'public'
+app.use(express.static(path.join(__dirname, "public")));
+
+// POST endpoint for report submission
 app.post("/submit-report", (req, res) => {
     const { location, issue, observation } = req.body;
 
@@ -27,8 +31,13 @@ Date: ${new Date().toLocaleString()}
     res.json({ message: "Report saved successfully!" });
 });
 
-const PORT = process.env.PORT || 3000;
+// Default route to serve index.html for any unknown route
+app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
+// Use PORT provided by Vercel or default 3000
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
